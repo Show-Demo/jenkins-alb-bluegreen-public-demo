@@ -1,6 +1,6 @@
-# order-api Jenkins Demo
+# Jenkins ALB Blue Green Demo
 
-这是一个按 Java 服务仓库结构组织的 Jenkins 发布仓库。
+这是一个基于 Jenkins 实现 ALB 蓝绿发布的公开演示仓库。
 
 ## 目录结构
 
