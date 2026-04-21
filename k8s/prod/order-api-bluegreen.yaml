@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api-blue
+  namespace: prod
+  labels:
+    app: order-api
+    color: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: order-api
+      color: blue
+  template:
+    metadata:
+      labels:
+        app: order-api
+        color: blue
+    spec:
+      containers:
+        - name: order-api
+          # image: registry.example.com/prod/order-api:latest
+          image: BLUE_IMAGE_PLACEHOLDER
+          imagePullPolicy: Always
+          env:
+            - name: RELEASE_COLOR
+              value: blue
+            - name: RELEASE_VERSION
+              value: stable-blue
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api-blue
+  namespace: prod
+spec:
+  selector:
+    app: order-api
+    color: blue
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api-green
+  namespace: prod
+  labels:
+    app: order-api
+    color: green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: order-api
+      color: green
+  template:
+    metadata:
+      labels:
+        app: order-api
+        color: green
+    spec:
+      containers:
+        - name: order-api
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: Always
+          env:
+            - name: RELEASE_COLOR
+              value: green
+            - name: RELEASE_VERSION
+              value: candidate-green
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api-green
+  namespace: prod
+spec:
+  selector:
+    app: order-api
+    color: green
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: order-api-prod
+  namespace: prod
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/healthcheck-enabled: "true"
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/success-codes: "200"
+spec:
+  rules:
+    - host: order-api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: order-api-blue
+                port:
+                  number: 80
